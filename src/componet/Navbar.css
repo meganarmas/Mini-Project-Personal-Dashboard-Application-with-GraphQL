@@ -1,0 +1,12 @@
+.navbar {
+    background-color: lightgray;
+}
+
+.NavLink {
+    color: black;
+    transition: color 1.0s ease;
+}
+
+.NavLink:hover {
+    color: rgb(14, 211, 211);
+}

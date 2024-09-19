@@ -1,17 +1,31 @@
 import { gql } from "urql";
 
 export const GET_USER = gql`
-    query{
-        user(id: 1){
-            id
-            name
-            email
-            phone
-            website
-            company
-            }    
-    }    
+    query GetUser($id: ID!) {
+    user(id: $id) {
+    id
+    name
+    username
+    phone
+    email
+    website
+  }
+}
 `;
+
+export const GET_USER_POSTS = gql`
+  query {
+   user(id: 1) {
+    posts {
+      data {
+        id
+        title
+        body
+      }
+    }
+  }
+}
+`
 
 export const GET_USER_POST_BY_ID = gql`
     query GetUserPosts($id: ID!) {
@@ -28,10 +42,11 @@ export const GET_USER_POST_BY_ID = gql`
 `;
 
 export const GET_COMMENTS = gql`
-    query GET_USER_POSTS($id: ID!){
-    comment (id: $id){
-        name
-        body
+    query GetComments($postId: ID!) {
+        comments(postId: $postId) {
+            id
+            body
+            userId
         }
     }
 `;
@@ -50,12 +65,27 @@ export const GET_TODO = gql`
     }
 `;
 
-export const GET_USER_ALBUMS = gql`
-    query GetUserAlbums($userId: ID!) {
-        albums(userId: $userId) {
-            id
-            title
+export const GET_ALBUMS = gql`
+    query {
+        albums {
+            data {
+                id
+                title
+                userId
+            }
         }
     }
 `;
 
+export const GET_PHOTOS_BY_ALBUM = gql`
+    query GetPhotosByAlbum($albumId: ID!) {
+        photos(albumId: $albumId) {
+            data {
+                id
+                title
+                url
+                thumbnailUrl
+            }
+        }
+    }
+`;

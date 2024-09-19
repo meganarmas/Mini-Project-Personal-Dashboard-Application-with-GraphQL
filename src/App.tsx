@@ -1,47 +1,44 @@
 import React , {useEffect, useState} from 'react';
-import NavBar from './componet/Navigation';
 import HomePage from './componet/Home';
 import ProfilePage from './componet/Profile';
 import ToDosList from './componet/To-Do';
 import PostForm from './componet/UsersPost';
-import Comments from './componet/Comments';
 import './App.css';
-import AlbumPage from './componet/Album';
 import { Routes, Route } from 'react-router-dom';
 
 
 function App() {
 
-  const [darkMode, setDarkMode] = useState(() => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
-    return savedMode ==='true'
+    return savedMode === 'true';
   });
 
   const toggleDarkMode = () => {
-    setDarkMode((prevMode) => {
+    setIsDarkMode((prevMode) => {
       const newMode = !prevMode;
       localStorage.setItem('darkMode', newMode.toString());
       return newMode;
     });
   };
 
-  useEffect (() => {
-    document.body.className = darkMode ? 'Dark Mode' : 'Light Mode';
-  }, [darkMode])
+  useEffect(() => {
+    document.body.className = isDarkMode ? 'dark-mode' : 'light-mode';
+  }, [isDarkMode]);
 
-  const userId = "3";
+
 
   return (
-    
     <div>
     <Routes>
       <Route path='/' element={<HomePage />} />
       <Route path='/profile' element={<ProfilePage />} />
       <Route path='/post' element={<PostForm />} />
-      <Route path='/post/:id' element={<Comments userId={'1'} />} />
-      <Route path='/todos' element={<ToDosList todoId={'9'} />} />
-      <Route path='album' element={<AlbumPage userId={'2'} />} />
+      <Route path='/todos' element={<ToDosList todoId={'10'} />} />
     </Routes>
+    <button className="mode-toggle" onClick={toggleDarkMode}>
+      {isDarkMode ? "Light Mode" : "Dark Mode"}
+    </button>
     
     </div>
   );

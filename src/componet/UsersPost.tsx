@@ -1,76 +1,66 @@
-import { useState, FormEvent, useRef } from "react";
+import { useState, FormEvent, useRef, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import { DELETE_POST, UPDATE_POST, CREATE_POST, GET_USER_POSTS } from "../query/Mutation";
+import { GET_POSTS, DELETE_POST, UPDATE_POST, CREATE_POST, GET_COMMENTS } from "../query/Mutation";
 import { Form, Button } from "react-bootstrap";
 import NavBar from "./Navigation";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-interface PostFormProps {
-    postId?: string;
-}
-
-const PostForm: React.FC<PostFormProps> = ({ postId }) => {
-    const { data: postsData, loading: postsLoading } = useQuery(GET_USER_POSTS);
-    const [createPost, { data: createData, loading: createLoading }] = useMutation(CREATE_POST);
+const PostForm: React.FC = () => {
+    const { data: postsData, loading: postsLoading } = useQuery(GET_POSTS);
+    const [createPost] = useMutation(CREATE_POST);
     const [deletePost] = useMutation(DELETE_POST);
     const [updatePost] = useMutation(UPDATE_POST);
-
+    const [showComments, setShowComments] = useState<string | null>(null);
+    
     const inputTitle = useRef<HTMLInputElement>(null);
     const inputBody = useRef<HTMLInputElement>(null);
-    const inputUserId = useRef<HTMLInputElement>(null);
-
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
-    const [visiblePosts, setVisiblePosts] = useState<number>(10); // State to track visible posts
 
-    const handleSubmit = async (e: FormEvent) => {
+    const { data: commentsData, loading: commentsLoading } = useQuery(GET_COMMENTS, {
+        variables: { postId: showComments || '' },
+        skip: !showComments, // Skip fetching if no post is selected
+    });
+
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         if (inputTitle.current && inputBody.current) {
-            try {
-                await createPost({
-                    variables: {
-                        input: {
-                            title: inputTitle.current.value,
-                            body: inputBody.current.value,
-                        },
+            createPost({
+                variables: {
+                    input: {
+                        title: inputTitle.current.value,
+                        body: inputBody.current.value,
+                        userId: 1, // You might want to set a user ID dynamically
                     },
-                    refetchQueries: [{ query: GET_USER_POSTS }],
-                });
+                },
+                refetchQueries: [{ query: GET_POSTS }],
+            }).catch((err) => console.error("Mutation error:", err));
 
-                inputTitle.current.value = "";
-                inputBody.current.value = "";
-            } catch (err) {
-                console.error("Mutation error:", err);
-            }
+            inputTitle.current.value = "";
+            inputBody.current.value = "";
         }
     };
 
-    const handleUpdate = async (id: string, title: string, body: string) => {
-        try {
-            await updatePost({
-                variables: {
-                    id,
-                    input: {
-                        title,
-                        body,
-                    },
+    const handleUpdate = (id: string, title: string, body: string) => {
+        updatePost({
+            variables: {
+                id,
+                input: {
+                    title,
+                    body,
                 },
-                refetchQueries: [{ query: GET_USER_POSTS }],
-            });
-            setEditingPostId(null);
-        } catch (err) {
-            console.error("Mutation error:", err);
-        }
+            },
+        }).catch((err) => console.error("Mutation error:", err));
     };
 
     const handleDelete = (id: string) => {
         deletePost({
             variables: { id },
             update: (cache) => {
-                const existingPosts = cache.readQuery({ query: GET_USER_POSTS });
+                const existingPosts = cache.readQuery({ query: GET_POSTS });
                 const newPosts = existingPosts.posts.data.filter((post: any) => post.id !== id);
 
                 cache.writeQuery({
-                    query: GET_USER_POSTS,
+                    query: GET_POSTS,
                     data: {
                         posts: {
                             ...existingPosts.posts,
@@ -88,11 +78,7 @@ const PostForm: React.FC<PostFormProps> = ({ postId }) => {
         setEditingPostId(post.id);
     };
 
-    const handleShowMore = () => {
-        setVisiblePosts(prev => prev + 10);
-    };
-
-    if (postsLoading || createLoading) return <p>Loading...</p>;
+    if (postsLoading) return <p>Loading...</p>;
 
     return (
         <div>
@@ -118,7 +104,7 @@ const PostForm: React.FC<PostFormProps> = ({ postId }) => {
                 </Form.Group>
 
                 <Button
-                    type="submit"
+                    type="button"
                     onClick={(e: FormEvent) => {
                         if (editingPostId) {
                             handleUpdate(editingPostId, inputTitle.current!.value, inputBody.current!.value);
@@ -131,34 +117,34 @@ const PostForm: React.FC<PostFormProps> = ({ postId }) => {
                 </Button>
             </Form>
 
-            {createData && createData.createPost && (
-                <div>
-                    <h2>Newly Created Post:</h2>
-                    <p>ID: {createData.createPost.id}</p>
-                    <p>Title: {createData.createPost.title}</p>
-                    <p>Body: {createData.createPost.body}</p>
-                </div>
-            )}
-
             <h2>All Posts</h2>
-            {postsData?.posts?.data.slice(0, visiblePosts).map((post: any) => (
+            {postsData?.posts?.data.map((post: any) => (
                 <div key={post.id}>
                     <h3>{post.title}</h3>
                     <p>{post.body}</p>
-                    <p>User ID: {post.user.id}</p>
+                    <p>User ID: {post.userId}</p>
                     <Button onClick={() => handleDelete(post.id)}>
                         Delete
                     </Button>
                     <Button onClick={() => handleEditClick(post)}>
                         Edit
                     </Button>
+                    <Button onClick={() => setShowComments(prev => prev === post.id ? null : post.id)}>
+                        {showComments === post.id ? "Hide Comments" : "Show Comments"}
+                    </Button>
+                    {showComments === post.id && !commentsLoading && commentsData?.comments && (
+                        <div>
+                            <h4>Comments:</h4>
+                            {commentsData.comments.map((comment: { id: Key | null | undefined; body: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | null | undefined; userId: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | null | undefined; }) => (
+                                <div key={comment.id}>
+                                    <p>{comment.body}</p>
+                                    <p>User ID: {comment.userId}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             ))}
-            {visiblePosts < (postsData?.posts?.data.length || 0) && (
-                <Button onClick={handleShowMore}>
-                    Show More
-                </Button>
-            )}
         </div>
     );
 };

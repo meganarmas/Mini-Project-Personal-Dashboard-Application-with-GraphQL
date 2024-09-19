@@ -1,6 +1,6 @@
 import { gql } from 'urql';
 
-export const GET_USER_POSTS = gql `
+export const GET_POSTS = gql `
     query {
         posts{
             data{
@@ -37,5 +37,15 @@ export const UPDATE_POST = gql `
 export const DELETE_POST = gql `
     mutation ($id: ID!){
         deletePost(id: $id)
+    }
+`;
+
+export const GET_COMMENTS = gql`
+    query GetComments($postId: ID!) {
+        comments(postId: $postId) {
+            id
+            body
+            userId
+        }
     }
 `;
