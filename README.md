@@ -7,11 +7,11 @@ To begin, download this repository. Make sure all files are included within.
 Navigate to the project directory with cd personal-dashboard-app and when ready to launch, type npm start into the terminal to use the application.
 
 If you would like to see the to do list from another user, go to App.tsx and in
-**<Route path='/todos' element={<ToDosList todoId={'10'} />} /> ** change the '10' to the user number of your choosing. You may also do this in the Profile page.
-```
+<Route path='/todos' element={<ToDosList todoId={'10'} />} /> change the '10' to the user number of your choosing. You may also do this in the Profile page.
 
 
 If needed, please install these to help with the code:
+
 ```python
 npm install @apollo/client graphql urql react-router-dom react-bootstrap bootstrap
 ```
